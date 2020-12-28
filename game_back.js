@@ -21,4 +21,4 @@ io.sockets.on('connection', socket => {
     })
 })
 
-server.listen(1000);
+server.listen(process.env.PORT);
