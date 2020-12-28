@@ -6,7 +6,7 @@ const io = require('socket.io')(server);
 
 
 app.get('/',(req, res) => {
-    res.sendFile(__dirname + '\\gest.html');
+    res.sendFile(__dirname + '/gest.html');
 })
 
 io.sockets.on('connection', socket => {
