@@ -1,0 +1,179 @@
+<html>
+    <head>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" integrity="sha512-3P8rXCuGJdNZOnUx/03c1jOTnMn3rP63nBip5gOP2qmUh5YAdVAvFZ1E+QLZZbC1rtMrQb+mah3AfYW11RUrWA==" crossorigin="anonymous"></script>
+        <title>gest best</title>
+        <style>
+            a{
+            text-decoration:none;
+            color: black;
+            }
+            #yyy{
+            direction: rtl;
+            }
+        </style>
+    </head>
+    <body style="font-size: 20px;">
+        <div style="text-align: center; margin-top:100px;" id="first">
+                <h1 style="font-size: 50px; color: rgb(117, 38, 9);">"BEST GEST"</h1>
+                <h3>אתם והחברים מתחרים ביניכם מי ינחש יותר מהר מספר "חזק" בין אחד למאה</h3>
+                <h5 id="tor"></h5>
+                <button class="starter">התחל משחק</button>
+        </div>
+       <div>
+           <p class="status">מחכה לשחקן שיצטרף...</p>
+       </div>
+        <div id="yyy" class="loader" style="text-align: center; display: none;">
+            <input type="number" id="gest" style="font-size: 40px;">
+            <br>
+            <input type="button" id="clicker" value="שיגור ניחוש">
+           
+        </div>
+        <button id="com_click" style="display:none;"></button>
+        <button id="com_send" style="display:none;"></button>
+        <div id="status" style="text-align: center;"></div>
+        <div id="theend" style="text-align: center; display: none; margin-top: 30px;">
+            
+        
+            <div id="total" style="text-align: center; color: orangered; font-size: 35px;">
+
+            </div>
+            <div id="bigmoney" style="text-align: center; color: orangered; font-size: 35px;">
+
+            </div>
+            <div>
+                <button><a id="new" href="gest.html">משחק חדש</a></button>
+                <button id="chalnge">אתגר חבר</button>
+                <div id="chalnge_form" style="display:none;">
+                    <h3>הזן כתובת מייל</h3>
+                    <input id="email" type="email">
+                    <button id="send_mail">שלח לחבר </button>
+                </div>
+            </div>
+            
+        </div>
+    <script>
+        $(document).ready(function(){
+            const socket = io.connect();
+            var player1;
+            var player2 = 'החבר שלך';
+            requiredFunction();
+            function requiredFunction() {
+                player1 = prompt('לפני שמתחילים איך קוראים לך?');
+                if(!player1){
+                    requiredFunction();
+                }
+            };
+
+            var first = '';
+            var random = Math.random();
+            var number = Math.floor(random*50)+1;
+            var first_num = number;
+            socket.emit('start', number);
+            socket.on('start', function(num){
+                if(num !== first_num){
+                    number = num + first_num;
+                    var send = [number, player1];
+                    socket.emit('go', send);
+                }
+            })
+
+            socket.on('go', function(get){
+                number = get[0];
+                $('#yyy').removeClass('loader');
+                $('.status').text('');
+                if(player1 == get[1]){
+                    first = "i'm the first";
+                }
+            })
+
+            $('.starter').on('click', function(){
+                $('.starter').hide();
+                $('#yyy').show();
+                if(first.length < 1){
+                    $('#com_click').trigger('click');
+                }
+            })
+            var hige = 100;
+            var low = 0;
+            var my_gest = 0;
+            $('#clicker').on('click',function(){
+                my_gest = $('#gest').val();
+                socket.emit('send_gest', my_gest);
+                $('#com_click').trigger('click');
+                
+            });
+        
+            
+            $('#com_click').on('click', function(){
+                $('#tor').text('כעת תור ' + player2 + ' אנא המתינו לתורכם');
+                $('#gest').prop('readonly',true);
+                $('#clicker').prop('disabled',true);
+                $('#clicker').prop('value','חכו לתורכם');
+            })
+
+            socket.on('get_gest', function(the_gest){
+                $('#gest').val(the_gest);
+                if (the_gest > number){
+                    if(parseInt(the_gest) < parseInt(hige)){
+                        hige = the_gest;
+                    }
+                    $('#status').text('נסו מספר יותר נמוך מ-'+the_gest+' בפעם הבאה');
+                    if(my_gest !== the_gest){
+                        $('#com_send').trigger('click');
+                    } else{
+                        $('#com_click').trigger('click');
+                    }
+                };
+                if (the_gest < number){
+                    if( low < the_gest ){
+                        low = the_gest;
+                    };
+                    $('#status').text('נסו מספר יותר גבוה מ-'+the_gest+' בפעם הבאה');
+                    if(my_gest !== the_gest){
+                        $('#com_send').trigger('click');
+                    } else{
+                        $('#com_click').trigger('click');
+                    }
+                };
+
+                if (the_gest == number){
+                    if(my_gest !== the_gest){
+                        
+                        $('#tor').text('');
+                        $('#yyy').html('<h1 style="color:red; background-color:grey; font-size: 60px;">אויי!!! </br> </br>הפסדת ל '+ player2+'</h1>');
+                        $('#first, #status').hide();
+                        $('#theend').show();
+
+                    } else{
+                        
+                        $('#tor').text('');
+                        $('#yyy').html('<h1 style="color:red; background-color:grey; font-size: 60px;">בינגו!!! </br> </br>ניצחת את '+ player2+'</h1>');
+                        $('#first, #status').hide();
+                        $('#theend').show();
+
+                    }
+                }
+
+            })
+            $('#com_send').on('click', function(){
+                setTimeout(function(){
+                    $('#tor').text(player1 + ' כעת תורך');
+                    $('#gest').prop('readonly',false);
+                    $('#clicker').prop('disabled',false);
+                    $('#clicker').prop('value','שיגור ניחוש');
+                    $('#gest').val('');
+                 },3000);
+            })
+
+            function showme(){
+            $('#total').show();
+            };
+
+
+
+        });
+
+    </script>
+</body>
+</html>
